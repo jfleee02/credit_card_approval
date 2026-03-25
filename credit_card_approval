@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit Card Approval Prediction</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F5F0;
+      --ink: #1A1714;
+      --muted: #6B6560;
+      --accent: #2A6049;
+      --accent2: #3B6EA5;
+      --accent3: #C94F2C;
+      --rule: #D9D4CC;
+      --card-bg: #FFFFFF;
+      --tag-bg: #EDE9E3;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(247,245,240,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--rule);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      height: 56px;
+    }
+    .nav-logo { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a { font-size: 0.82rem; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--ink); }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 900px; margin: 0 auto;
+      padding: clamp(5rem,12vw,9rem) clamp(1.5rem,5vw,4rem) clamp(3rem,6vw,5rem);
+    }
+    .hero-eyebrow { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .eyebrow-line { width: 32px; height: 1px; background: var(--accent); }
+    .eyebrow-text { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+    .hero h1 { font-family: var(--serif); font-size: clamp(2.6rem,6vw,4.5rem); line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 1rem; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero-sub { font-size: 1.1rem; color: var(--muted); font-weight: 300; max-width: 600px; margin-bottom: 2.5rem; line-height: 1.65; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin-bottom: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+    .meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .meta-label { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .meta-value { font-size: 0.9rem; font-weight: 500; color: var(--ink); }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.4rem; font-size: 0.85rem; font-weight: 600; font-family: var(--sans); letter-spacing: 0.02em; text-decoration: none; border-radius: 4px; transition: all 0.2s; cursor: pointer; border: none; }
+    .btn-primary { background: var(--ink); color: var(--bg); }
+    .btn-primary:hover { background: var(--accent); }
+    .btn-outline { background: transparent; color: var(--ink); border: 1.5px solid var(--rule); }
+    .btn-outline:hover { border-color: var(--ink); }
+
+    /* ── LAYOUT ── */
+    .divider { max-width: 900px; margin: 0 auto; padding: 0 clamp(1.5rem,5vw,4rem); }
+    .divider hr { border: none; border-top: 1px solid var(--rule); }
+    section { max-width: 900px; margin: 0 auto; padding: clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem); }
+    .section-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2rem; }
+    .section-num { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; }
+    .section-title { font-family: var(--serif); font-size: clamp(1.6rem,3vw,2.1rem); line-height: 1.2; }
+
+    /* ── ABSTRACT ── */
+    .abstract-box { background: var(--card-bg); border: 1px solid var(--rule); border-left: 3px solid var(--accent); padding: 2rem 2.5rem; border-radius: 0 6px 6px 0; }
+    .abstract-box p { font-size: 0.97rem; line-height: 1.8; }
+    .abstract-box strong { color: var(--accent); font-weight: 600; }
+
+    /* ── STATS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; margin: 2.5rem 0; }
+    .stat-cell { background: var(--card-bg); padding: 1.6rem 1.5rem; text-align: center; }
+    .stat-number { font-family: var(--serif); font-size: 2rem; line-height: 1; margin-bottom: 0.4rem; }
+    .stat-number.green { color: var(--accent); }
+    .stat-number.blue { color: var(--accent2); }
+    .stat-number.red { color: var(--accent3); }
+    .stat-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    /* ── PIPELINE ── */
+    .pipeline { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 1.5rem 0; }
+    .pipe-step { background: var(--card-bg); border: 1px solid var(--rule); border-radius: 6px; padding: 0.85rem 1.2rem; font-size: 0.82rem; font-weight: 500; white-space: nowrap; }
+    .pipe-step.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .pipe-arrow { color: var(--muted); font-size: 0.85rem; padding: 0 0.4rem; }
+
+    /* ── METHODS GRID ── */
+    .methods-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 1.25rem; margin-top: 1.5rem; }
+    .method-card { background: var(--card-bg); border: 1px solid var(--rule); border-radius: 8px; padding: 1.5rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    .method-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(42,96,73,0.08); }
+    .method-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .method-name { font-family: var(--serif); font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .method-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FINDINGS ── */
+    .findings-list { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1.5rem; }
+    .finding-item { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--rule); border-radius: 8px; }
+    .finding-tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; background: var(--tag-bg); color: var(--muted); padding: 0.3rem 0.65rem; border-radius: 3px; white-space: nowrap; }
+    .finding-tag.green { background: rgba(42,96,73,0.1); color: var(--accent); }
+    .finding-tag.blue { background: rgba(59,110,165,0.1); color: var(--accent2); }
+    .finding-tag.red { background: rgba(201,79,44,0.1); color: var(--accent3); }
+    .finding-text { font-size: 0.95rem; line-height: 1.65; }
+    .finding-text strong { font-weight: 600; }
+    .hl { font-family: var(--serif); font-size: 1.05rem; color: var(--accent); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; margin-top: 1.5rem; border: 1px solid var(--rule); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { background: var(--tag-bg); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.85rem 1.25rem; text-align: left; font-weight: 500; }
+    td { padding: 0.8rem 1.25rem; border-top: 1px solid var(--rule); color: var(--ink); }
+    tr:hover td { background: rgba(0,0,0,0.015); }
+    .td-green { color: var(--accent); font-weight: 600; }
+    .td-mono { font-family: var(--mono); font-size: 0.82rem; }
+    .badge { display: inline-block; font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: 500; }
+    .badge-best { background: rgba(42,96,73,0.12); color: var(--accent); }
+    .badge-good { background: rgba(59,110,165,0.1); color: var(--accent2); }
+    .badge-weak { background: rgba(201,79,44,0.08); color: var(--accent3); }
+
+    /* ── INSIGHT BOX ── */
+    .insight-box { background: var(--card-bg); border: 1px solid var(--rule); border-left: 3px solid var(--accent2); padding: 1.5rem 2rem; border-radius: 0 6px 6px 0; margin-top: 2rem; }
+    .insight-box h4 { font-family: var(--serif); font-size: 1rem; margin-bottom: 0.5rem; }
+    .insight-box p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+    .insight-box strong { color: var(--ink); }
+
+    /* ── TAGS ── */
+    .tags-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+    .tech-tag { font-family: var(--mono); font-size: 0.78rem; padding: 0.4rem 0.85rem; border-radius: 4px; background: var(--tag-bg); color: var(--ink); border: 1px solid var(--rule); }
+    .tech-tag.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+    /* ── TEAM ── */
+    .team-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+    .team-member { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1rem; background: var(--card-bg); border: 1px solid var(--rule); border-radius: 100px; font-size: 0.85rem; }
+    .team-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--tag-bg); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--rule); max-width: 900px; margin: 0 auto; padding: 2.5rem clamp(1.5rem,5vw,4rem); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-left { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+    .footer-right { display: flex; gap: 1.5rem; }
+    .footer-right a { font-size: 0.82rem; color: var(--muted); text-decoration: none; }
+    .footer-right a:hover { color: var(--ink); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .hero h1 { animation: fadeUp 0.7s ease both; }
+    .hero-sub { animation: fadeUp 0.7s 0.1s ease both; }
+    .hero-meta { animation: fadeUp 0.7s 0.2s ease both; }
+    .hero-actions { animation: fadeUp 0.7s 0.3s ease both; }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .finding-item { grid-template-columns: 1fr; }
+      .pipeline { gap: 0.5rem; }
+      .pipe-arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <span class="nav-logo">Group 2 · UC Irvine</span>
+    <div class="nav-links">
+      <a href="#methods">Methods</a>
+      <a href="#eda">EDA</a>
+      <a href="#models">Models</a>
+      <a href="#bias">Bias</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Classification · Machine Learning · Fairness</span>
+    </div>
+    <h1>Credit Card<br /><em>Approval</em><br />Prediction</h1>
+    <p class="hero-sub">
+      A full-pipeline machine learning study comparing six classifier families to predict
+      credit card approval — with rigorous feature engineering, cross-validated threshold
+      selection, and a demographic bias analysis.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Best Model</span>
+        <span class="meta-value">Tuned Random Forest</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Best ROC-AUC</span>
+        <span class="meta-value">~0.95+</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Models Compared</span>
+        <span class="meta-value">6 classifier families</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Course</span>
+        <span class="meta-value">BANA 201B · Merage School</span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        View on GitHub
+      </a>
+      <a href="#models" class="btn btn-outline">See Results ↓</a>
+    </div>
+  </div>
+
+  <div class="divider"><hr /></div>
+
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="section-header">
+      <span class="section-num">00</span>
+      <h2 class="section-title">Overview</h2>
+    </div>
+    <div class="abstract-box">
+      <p>
+        This project builds and evaluates a full credit card approval prediction pipeline on a real-world
+        applicant dataset. We conduct thorough exploratory data analysis, apply principled feature
+        engineering (credit score binning via decision trees, log-income transformation, interaction terms),
+        and benchmark <strong>six classifier families</strong> using a cross-validated F-beta evaluation
+        framework that prioritizes recall — reflecting the business cost of incorrectly rejecting qualified
+        applicants. The analysis concludes with a <strong>demographic bias audit</strong> examining approval
+        disparities across ethnicity groups and employment sectors.
+      </p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-number green">6</div>
+        <div class="stat-desc">Classifier families<br />benchmarked</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number">β = 2</div>
+        <div class="stat-desc">F-beta objective<br />(recall-weighted)</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number blue">4</div>
+        <div class="stat-desc">Credit score bins<br />(decision-tree split)</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number red">14%</div>
+        <div class="stat-desc">Latino approval rate<br />vs. 42–63% others</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number green">100%</div>
+        <div class="stat-desc">Recall on test set<br />(Random Forest)</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- METHODS -->
+  <section id="methods">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Methodology</h2>
+    </div>
+
+    <!-- Pipeline Flow -->
+    <p style="font-family:var(--mono); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem;">Analysis Pipeline</p>
+    <div class="pipeline">
+      <div class="pipe-step">Raw Data</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">EDA</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">Feature Engineering</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">Interaction Testing</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step active">Model Training</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">CV Threshold Tuning</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">Bias Audit</div>
+    </div>
+
+    <div class="methods-grid" style="margin-top:2rem;">
+      <div class="method-card">
+        <div class="method-icon">🌲</div>
+        <div class="method-name">Decision-Tree Binning</div>
+        <div class="method-desc">Credit scores were binned using information-gain splits (entropy criterion, max 5 leaves), producing four interpretable tiers: Poor, Low, Moderate, High.</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">📐</div>
+        <div class="method-name">Interaction Testing</div>
+        <div class="method-desc">Likelihood ratio tests and AIC/BIC comparisons evaluated five candidate interaction terms. Two were retained: Debt × Moderate Credit Score and YearsEmployed × log(Income).</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">🎯</div>
+        <div class="method-name">CV Threshold Optimization</div>
+        <div class="method-desc">Out-of-fold predicted probabilities from stratified 5-fold CV were used to select the threshold maximizing F-beta (β=2), preventing test-set leakage.</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">🔬</div>
+        <div class="method-name">SHAP Explainability</div>
+        <div class="method-desc">SHAP values were computed for the tuned Random Forest to explain global feature importance and individual prediction drivers beyond standard permutation importance.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- EDA FINDINGS -->
+  <section id="eda">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">EDA Key Findings</h2>
+    </div>
+    <div class="findings-list">
+      <div class="finding-item">
+        <span class="finding-tag green">Top Predictor</span>
+        <p class="finding-text">
+          <strong>Prior default history</strong> is the single strongest predictor of approval outcomes (|r| ≈ 0.72 with approval).
+          Applicants with a prior default are rejected at dramatically higher rates — a finding consistent across descriptive,
+          regression, and tree-based models.
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag green">Financial Stability</span>
+        <p class="finding-text">
+          <strong>Employment status and tenure</strong> were the second and third strongest predictors. Employed applicants
+          convert at substantially higher rates, and each additional year employed improves approval probability independently.
+          Credit score (|r| ≈ 0.41) and income also showed strong positive associations.
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag blue">Feature Engineering</span>
+        <p class="finding-text">
+          Income was <strong>log-transformed</strong> to reduce right skew (skew reduced from ~3.9 to ~0.6).
+          Credit scores were binned into four tiers using decision-tree information gain, improving interpretability
+          while preserving predictive structure. ZipCode was dropped due to extreme overfitting risk (170 unique values).
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag blue">Interactions</span>
+        <p class="finding-text">
+          Two interaction terms were retained after LR tests: <strong>Debt × Moderate Credit Score</strong> (p &lt; 0.01,
+          AIC improved by ~6 points) and <strong>YearsEmployed × log(Income)</strong> (p ≈ 0.03). Three others —
+          Debt×Income, CreditScore×Income, PriorDefault×CreditScore — were dropped due to non-significance,
+          limited AIC gains, or model convergence failure.
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag">Demographics</span>
+        <p class="finding-text">
+          Demographic variables (age, gender, marital status, citizenship) were dropped after EDA — they showed
+          weak independent relationships with approval and introduced bias risk. <strong>Industry and ethnicity</strong>
+          were retained as dummy variables to allow controlled analysis of group-level disparities.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- MODEL COMPARISON -->
+  <section id="models">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Model Comparison</h2>
+    </div>
+    <p style="color:var(--muted); font-size:0.95rem; max-width:620px; margin-bottom:0.5rem;">
+      All models evaluated using stratified 5-fold CV with F-beta (β=2) threshold optimization. Test metrics reported at optimal CV threshold.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Threshold</th>
+            <th>Accuracy</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F-beta (β=2)</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-green"><strong>Tuned Random Forest</strong></td>
+            <td class="td-mono">Optimized</td>
+            <td class="td-mono td-green">Highest</td>
+            <td class="td-mono">Competitive</td>
+            <td class="td-mono td-green">~100%</td>
+            <td class="td-mono td-green">Best</td>
+            <td><span class="badge badge-best">✓ Best Overall</span></td>
+          </tr>
+          <tr>
+            <td>LASSO Logistic Regression</td>
+            <td class="td-mono">0.38</td>
+            <td class="td-mono">0.861</td>
+            <td class="td-mono">0.848</td>
+            <td class="td-mono">0.881</td>
+            <td class="td-mono">0.892</td>
+            <td><span class="badge badge-good">Best Interpretable</span></td>
+          </tr>
+          <tr>
+            <td>Elastic Net Logistic</td>
+            <td class="td-mono">~0.38</td>
+            <td class="td-mono">~0.86</td>
+            <td class="td-mono">~0.85</td>
+            <td class="td-mono">~0.88</td>
+            <td class="td-mono">~0.89</td>
+            <td><span class="badge badge-good">≈ LASSO</span></td>
+          </tr>
+          <tr>
+            <td>Ridge Logistic Regression</td>
+            <td class="td-mono">~0.40</td>
+            <td class="td-mono">~0.85</td>
+            <td class="td-mono">~0.84</td>
+            <td class="td-mono">~0.87</td>
+            <td class="td-mono">~0.88</td>
+            <td><span class="badge badge-good">Solid</span></td>
+          </tr>
+          <tr>
+            <td>Tuned XGBoost</td>
+            <td class="td-mono">Optimized</td>
+            <td class="td-mono">Strong</td>
+            <td class="td-mono">Strong</td>
+            <td class="td-mono">High</td>
+            <td class="td-mono">High</td>
+            <td><span class="badge badge-good">Runner-Up</span></td>
+          </tr>
+          <tr>
+            <td>Linear SVM</td>
+            <td class="td-mono">—</td>
+            <td class="td-mono">Moderate</td>
+            <td class="td-mono">Moderate</td>
+            <td class="td-mono">Moderate</td>
+            <td class="td-mono">Moderate</td>
+            <td><span class="badge">Acceptable</span></td>
+          </tr>
+          <tr>
+            <td>Naive Bayes</td>
+            <td class="td-mono">Very low</td>
+            <td class="td-mono">Low</td>
+            <td class="td-mono">Poor</td>
+            <td class="td-mono">Poor</td>
+            <td class="td-mono">Low</td>
+            <td><span class="badge badge-weak">Underperformed</span></td>
+          </tr>
+          <tr>
+            <td>Single Decision Tree</td>
+            <td class="td-mono">Very low</td>
+            <td class="td-mono">Low</td>
+            <td class="td-mono">Unstable</td>
+            <td class="td-mono">Unstable</td>
+            <td class="td-mono">Low</td>
+            <td><span class="badge badge-weak">Underperformed</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="insight-box">
+      <h4>Dual-Model Strategy</h4>
+      <p>
+        The final recommendation is a <strong>dual-model deployment</strong>: use <strong>Random Forest</strong>
+        as the primary predictive engine (highest Fβ, near-perfect recall, robust to correlated predictors),
+        and <strong>LASSO Logistic Regression</strong> as an interpretability benchmark to understand key
+        approval drivers — critical for regulatory compliance and fairness auditing in credit decision contexts.
+      </p>
+    </div>
+
+    <!-- Top Predictors -->
+    <div style="margin-top:2.5rem;">
+      <h3 style="font-family:var(--serif); font-size:1.15rem; margin-bottom:1rem;">Key Predictors (LASSO Logistic Regression)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Feature</th><th>Coefficient</th><th>Direction</th><th>p-value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-mono">PriorDefault</td><td class="td-mono td-green">+1.41</td><td>↑ Approval</td><td class="td-mono">0.000</td></tr>
+            <tr><td class="td-mono">Income_log</td><td class="td-mono td-green">+0.62</td><td>↑ Approval</td><td class="td-mono">0.010</td></tr>
+            <tr><td class="td-mono">BankCustomer</td><td class="td-mono td-green">+0.55</td><td>↑ Approval</td><td class="td-mono">0.029</td></tr>
+            <tr><td class="td-mono">Industry_ConsumerDiscretionary</td><td class="td-mono td-green">+0.73</td><td>↑ Approval</td><td class="td-mono">0.013</td></tr>
+            <tr><td class="td-mono">Debt_x_Moderate</td><td class="td-mono" style="color:var(--accent3);">−0.48</td><td>↓ Approval</td><td class="td-mono">0.000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- BIAS ANALYSIS -->
+  <section id="bias">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Bias Analysis</h2>
+    </div>
+    <p style="color:var(--muted); font-size:0.95rem; max-width:640px; margin-bottom:1.5rem;">
+      Approval outcomes were examined across demographic groups and employment sectors to identify potential disparities and test whether they persist after controlling for financial characteristics.
+    </p>
+
+    <div class="findings-list">
+      <div class="finding-item">
+        <span class="finding-tag red">Disparity</span>
+        <p class="finding-text">
+          Latino applicants in the dataset were approved at approximately <span class="hl">14%</span>,
+          compared to <strong>42–63%</strong> for other ethnic groups — a substantial raw gap.
+          Latino applicants also exhibited higher prior default rates, lower income, and fewer years of
+          employment, which are known approval drivers.
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag red">Controlled Result</span>
+        <p class="finding-text">
+          After controlling for all financial predictors (debt, income, employment, prior default, credit
+          score, bank status), the Latino ethnicity coefficient remained <strong>statistically significant
+          at the 5% level</strong>, with approximately a <strong>75% lower odds of approval</strong>.
+          However, the Latino subsample contains only <span class="hl">57 individuals</span>, raising
+          caution about estimate stability and generalizability.
+        </p>
+      </div>
+      <div class="finding-item">
+        <span class="finding-tag blue">Industry</span>
+        <p class="finding-text">
+          Approval rates varied widely by industry: Utilities (~84%) and IT (~71%) at the top;
+          Healthcare (~13%) and Real Estate (~23%) at the bottom. A controlled regression found
+          that <strong>most industry effects disappeared</strong> after accounting for financial profiles —
+          lower-approval industries tended to have higher prior default rates and weaker credit characteristics.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- TECH STACK -->
+  <section id="stack">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Tech Stack</h2>
+    </div>
+    <div class="tags-row">
+      <span class="tech-tag primary">Python</span>
+      <span class="tech-tag primary">scikit-learn</span>
+      <span class="tech-tag primary">XGBoost</span>
+      <span class="tech-tag primary">statsmodels</span>
+      <span class="tech-tag">pandas</span>
+      <span class="tech-tag">numpy</span>
+      <span class="tech-tag">seaborn</span>
+      <span class="tech-tag">matplotlib</span>
+      <span class="tech-tag">SHAP</span>
+      <span class="tech-tag">Logistic Regression (L1/L2/ElasticNet)</span>
+      <span class="tech-tag">Random Forest</span>
+      <span class="tech-tag">Decision Tree</span>
+      <span class="tech-tag">SVM (Linear + RBF)</span>
+      <span class="tech-tag">Naive Bayes</span>
+      <span class="tech-tag">StratifiedKFold CV</span>
+      <span class="tech-tag">GridSearchCV</span>
+    </div>
+  </section>
+
+  <div class="divider"><hr /></div>
+
+  <!-- TEAM -->
+  <section id="team">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Team</h2>
+    </div>
+    <div class="team-row">
+      <div class="team-member"><div class="team-avatar">G2</div> Group 2 · Merage School of Business</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-left">Group 2 · Merage School of Business · UC Irvine</span>
+    <div class="footer-right">
+      <a href="#">GitHub</a>
+      <a href="#">Notebook</a>
+      <a href="#">Portfolio</a>
+    </div>
+  </footer>
+
+</body>
+</html>
